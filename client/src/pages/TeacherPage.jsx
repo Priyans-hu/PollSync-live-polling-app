@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { io } from 'socket.io-client';
+import IntervuePollButton from '../components/IntervuePollButton';
 const socket = io(process.env.REACT_APP_BACKEND_URL);
 
 export default function TeacherPage() {
@@ -26,6 +27,7 @@ export default function TeacherPage() {
 
   return (
     <div className='p-6 max-w-2xl mx-auto'>
+      <IntervuePollButton />
       <h1 className='text-xl font-bold mb-4'>Teacher Dashboard</h1>
       <input
         value={question}
