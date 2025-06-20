@@ -61,9 +61,7 @@ export default function TeacherPage() {
       setStudentList(list);
     });
 
-    return () => {
-      socket.off('teacher:student_list');
-    };
+    return () => socket.off('teacher:student_list');
   }, []);
 
   useEffect(() => {
@@ -232,18 +230,22 @@ export default function TeacherPage() {
         <div className='mt-6'>
           <h3 className='font-semibold mb-2'>Connected Students</h3>
           <ul className='space-y-2'>
-            {studentList.map((name) => (
+            {studentList.map(({ name, isKicked }) => (
               <li
                 key={name}
                 className='flex items-center justify-between p-2 bg-gray-100 rounded'
               >
-                <span>{name}</span>
-                <button
-                  onClick={() => socket.emit('teacher:kick_student', name)}
-                  className='text-red-600 border border-red-600 px-3 py-1 rounded hover:bg-red-100 text-sm'
-                >
-                  Kick Out
-                </button>
+                <span className={isKicked ? 'text-red-500 line-through' : ''}>
+                  {name}
+                </span>
+                {!isKicked && (
+                  <button
+                    onClick={() => socket.emit('teacher:kick_student', name)}
+                    className='text-red-600 border border-red-600 px-3 py-1 rounded hover:bg-red-100 text-sm'
+                  >
+                    Kick Out
+                  </button>
+                )}
               </li>
             ))}
           </ul>

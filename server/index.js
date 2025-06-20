@@ -39,7 +39,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('student:register', (name) => {
-    activeStudents.set(socket.id, name);
+    activeStudents.set(socket.id, { name, isKicked: false });
+    sendUpdatedStudentList(); // notify teacher
   });
 
   socket.on('teacher:create_poll', ({ question, options, timeout }) => {
@@ -89,13 +90,24 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     activeStudents.delete(socket.id);
+    sendUpdatedStudentList(); // update teacher
   });
 
-  socket.on('teacher:request_student_list', () => {
-    const studentList = Array.from(activeStudents.values());
-    socket.emit('teacher:student_list', studentList);
+  socket.on('teacher:kick_student', (studentName) => {
+    for (const [id, info] of activeStudents.entries()) {
+      if (info.name === studentName) {
+        info.isKicked = true;
+        io.to(id).emit('student:kick_notice');
+      }
+    }
+    sendUpdatedStudentList();
   });
 });
+
+function sendUpdatedStudentList() {
+  const list = Array.from(activeStudents.values());
+  io.emit('teacher:student_list', list);
+}
 
 app.get('/api/past-polls', (req, res) => {
   res.json(pastPolls);
