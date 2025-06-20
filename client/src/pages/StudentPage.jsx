@@ -34,6 +34,8 @@ export default function StudentPage() {
   const submitAnswer = () => {
     if (!name || !answer) return;
     socket.emit('student:submit_answer', { name, answer });
+    setCurrentPoll(null);
+    setShowResults(true);
   };
 
   if (!name) {
@@ -79,7 +81,9 @@ export default function StudentPage() {
         {currentPoll ? (
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
-              <h2 className='text-lg font-semibold'>Question 1</h2>
+              <h2 className='text-lg font-semibold'>
+                {currentPoll.quesNumber || 'Question 1'}
+              </h2>
               <span className='text-red-500 font-medium'>
                 ⏱️ {currentPoll.timeout}
               </span>

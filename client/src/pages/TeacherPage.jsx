@@ -1,27 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import IntervuePollButton from '../components/IntervuePollButton';
-import { socket } from '../Socket';
 import LivePollResults from '../components/LivePollResults';
+import { socket } from '../Socket';
 
 export default function TeacherPage() {
-  const [currentPoll, setCurrentPoll] = useState({});
+  const [currentPoll, setCurrentPoll] = useState(null);
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [correctOptions, setCorrectOptions] = useState([false, false]);
   const [timeout, setTimeoutValue] = useState(60);
-  const [responses, setResponses] = useState({});
+  const [responses, setResponses] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const timerRef = useRef(null);
 
   const handleCreatePoll = () => {
-    setCurrentPoll({
-      question,
-      options,
-      timeout,
-    });
-    socket.emit('teacher:create_poll', {
-      question,
-      options,
-      timeout,
-    });
+    const newPoll = { question, options, timeout };
+    setCurrentPoll(newPoll);
+    setResponses(null);
+    socket.emit('teacher:create_poll', newPoll);
+    setTimeLeft(timeout);
   };
 
   const handleAddOption = () => {
@@ -30,24 +27,63 @@ export default function TeacherPage() {
   };
 
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log('Socket connected!', socket.id);
+    socket.on('poll:update', (data) => setResponses(data));
+    socket.on('poll:results', (data) => {
+      setResponses(data);
+      clearInterval(timerRef.current);
+      setTimeLeft(0);
     });
 
-    socket.on('connect_error', (err) => {
-      console.error('Connection error:', err);
-    });
+    return () => {
+      socket.off('poll:update');
+      socket.off('poll:results');
+    };
   }, []);
 
-  socket.on('poll:update', (data) => setResponses(data));
-  socket.on('poll:results', (data) => setResponses(data));
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0) return;
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [timeLeft]);
+
+  const handleNewPoll = () => {
+    setCurrentPoll(null);
+    setQuestion('');
+    setOptions(['', '']);
+    setCorrectOptions([false, false]);
+    setTimeoutValue(60);
+    setResponses(null);
+    setTimeLeft(null);
+  };
+
+  if (currentPoll && responses) {
+    return (
+      <div className='max-w-3xl mx-auto p-8 text-gray-800'>
+        <IntervuePollButton />
+        <LivePollResults poll={currentPoll} results={responses} />
+        <div className='text-center mt-6'>
+          <button
+            onClick={handleNewPoll}
+            className='bg-purple-600 text-white px-6 py-2 rounded-full hover:bg-purple-700'
+          >
+            Ask New Question
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='max-w-3xl mx-auto p-8 text-gray-800'>
       <div className='mb-8'>
-        {/* <div className='inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold mb-4'>
-          ✦ Intervue Poll
-        </div> */}
         <IntervuePollButton />
         <h1 className='text-3xl font-bold mb-2'>
           Let's <span className='text-black'>Get Started</span>
@@ -154,11 +190,6 @@ export default function TeacherPage() {
           Ask Question
         </button>
       </div>
-    </div>
-  ) : (
-    <div>
-      <IntervuePollButton />
-      <LivePollResults poll={currentPoll} results={responses} />
     </div>
   );
 }
