@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import IntervuePollButton from '../components/IntervuePollButton';
 import CircularLoader from '../components/CircularLoader';
-import { socket } from '../Socket';
+import { socket } from '../socket';
 
 export default function StudentPage() {
   const [name, setName] = useState(localStorage.getItem('studentName') || '');
@@ -9,12 +9,18 @@ export default function StudentPage() {
   const [answer, setAnswer] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState({});
+  const [timeLeft, setTimeLeft] = useState(null);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     socket.on('poll:new', (poll) => {
       setCurrentPoll(poll);
       setShowResults(false);
+      setAnswer('');
+      setResults({});
+      setTimeLeft(poll.timeout);
     });
+
     socket.on('poll:results', (data) => {
       setResults(data);
       setShowResults(true);
@@ -30,6 +36,22 @@ export default function StudentPage() {
       console.error('Connection error:', err);
     });
   }, []);
+
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerRef.current);
+  }, [timeLeft]);
 
   const submitAnswer = () => {
     if (!name || !answer) return;
@@ -49,7 +71,7 @@ export default function StudentPage() {
             Let's <span className='text-black'>Get Started</span>
           </h1>
           <p className='text-gray-500 mb-6'>
-            If you’re a student, you’ll be able to{' '}
+            If you’re a student, you’ll be able to
             <strong>submit your answers</strong>, participate in live polls, and
             see how your responses compare with your classmates.
           </p>
@@ -84,9 +106,10 @@ export default function StudentPage() {
               <h2 className='text-lg font-semibold'>
                 {currentPoll.quesNumber || 'Question 1'}
               </h2>
-              <span className='text-red-500 font-medium'>
-                ⏱️ {currentPoll.timeout}
-              </span>
+
+              <p className='text-purple-600 text-sm mt-2'>
+                ⏱️ Time left: {timeLeft}s
+              </p>
             </div>
             <div className='bg-gray-100 p-4 rounded-t-md font-medium'>
               {currentPoll.question}
@@ -114,6 +137,7 @@ export default function StudentPage() {
             <button
               onClick={submitAnswer}
               className='bg-purple-600 text-white px-6 py-2 rounded-full hover:bg-purple-700 mt-4'
+              disabled={timeLeft === 0 || showResults}
             >
               Submit
             </button>
@@ -122,7 +146,9 @@ export default function StudentPage() {
           <div>
             <div className='flex items-center justify-between'>
               <h2 className='text-lg font-semibold'>Question 1</h2>
-              <span className='text-red-500 font-medium'>⏱️ 00:15</span>
+              <span className='text-red-500 font-medium'>
+                ⏱️ Time left: {timeLeft}s
+              </span>
             </div>
             <div className='bg-gray-100 p-4 rounded-t-md font-medium'>
               {currentPoll?.question || 'Poll ended'}

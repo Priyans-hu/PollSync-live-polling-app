@@ -184,8 +184,19 @@ export default function TeacherPage() {
 
       <div className='text-right'>
         <button
+          disabled={
+            !question ||
+            !Array.isArray(options) ||
+            options.length === 0 ||
+            options.every((opt) => !opt.trim())
+          }
           onClick={handleCreatePoll}
-          className='bg-darkish text-white font-semibold px-6 py-3 rounded-full shadow hover:bg-primary'
+          className={`font-semibold px-6 py-3 rounded-full shadow transition
+    ${
+      !question || options.every((opt) => !opt.trim())
+        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+        : 'bg-darkish text-white hover:bg-primary'
+    }`}
         >
           Ask Question
         </button>
