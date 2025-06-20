@@ -29,6 +29,7 @@ let studentResponses = new Map();
 let timer = null;
 const kickedStudents = new Set();
 const activeStudents = new Map();
+const pastPolls = []; // stores { question, options, timeout, responses, timestamp }
 
 io.on('connection', (socket) => {
   console.log('New client:', socket.id);
@@ -47,8 +48,17 @@ io.on('connection', (socket) => {
     io.emit('poll:new', currentPoll);
 
     clearTimeout(timer);
+
     timer = setTimeout(() => {
-      io.emit('poll:results', Object.fromEntries(studentResponses));
+      const results = Object.fromEntries(studentResponses);
+      io.emit('poll:results', results);
+
+      if (currentPoll) {
+        pastPolls.unshift({
+          ...currentPoll,
+          responses: results,
+        });
+      }
     }, timeout * 1000);
   });
 
@@ -85,6 +95,10 @@ io.on('connection', (socket) => {
     const studentList = Array.from(activeStudents.values());
     socket.emit('teacher:student_list', studentList);
   });
+});
+
+app.get('/api/past-polls', (req, res) => {
+  res.json(pastPolls);
 });
 
 server.listen(8080, () => console.log('Server running on port 8080'));

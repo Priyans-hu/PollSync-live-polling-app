@@ -11,10 +11,7 @@ export default function TeacherPage() {
   const [timeout, setTimeoutValue] = useState(60);
   const [responses, setResponses] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
-  const [pastPolls, setPastPolls] = useState(() => {
-    const stored = localStorage.getItem('pastPolls');
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [pastPolls, setPastPolls] = useState([]);
   const timerRef = useRef(null);
   const [studentList, setStudentList] = useState([]);
 
@@ -69,6 +66,12 @@ export default function TeacherPage() {
     };
   }, []);
 
+  useEffect(() => {
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/past-polls`)
+      .then((res) => res.json())
+      .then((data) => setPastPolls(data));
+  }, []);
+
   const handleNewPoll = () => {
     const completedPoll = {
       ...currentPoll,
@@ -76,7 +79,6 @@ export default function TeacherPage() {
     };
     const updatedHistory = [completedPoll, ...pastPolls];
     setPastPolls(updatedHistory);
-    localStorage.setItem('pastPolls', JSON.stringify(updatedHistory));
 
     setCurrentPoll(null);
     setQuestion('');
@@ -250,11 +252,11 @@ export default function TeacherPage() {
 
       {pastPolls.length > 0 && (
         <div className='mt-10'>
-          <h3 className='text-lg font-semibold mb-2'>Previous Questions</h3>
-          <ul className='space-y-2'>
+          <h3 className='text-lg font-semibold mb-2'>Previous Polls</h3>
+          <ul className='space-y-6'>
             {pastPolls.map((poll, i) => (
               <li key={i} className='p-3 border rounded bg-gray-50'>
-                <strong>Q{i + 1}:</strong> {poll.question}
+                <LivePollResults poll={poll} results={poll.responses} />
               </li>
             ))}
           </ul>
