@@ -4,10 +4,14 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 
 const app = express();
+app.use(cors());
+
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
   },
 });
 
@@ -17,6 +21,10 @@ let timer = null;
 
 io.on('connection', (socket) => {
   console.log('New client:', socket.id);
+
+  socket.onAny((event, ...args) => {
+    console.log(`[Socket EVENT]:`, event, args);
+  });
 
   socket.on('teacher:create_poll', ({ question, options, timeout }) => {
     currentPoll = { question, options, timeout, createdAt: Date.now() };
@@ -43,4 +51,4 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(3000, () => console.log('Server running on port 3000'));
+server.listen(8080, () => console.log('Server running on port 8080'));

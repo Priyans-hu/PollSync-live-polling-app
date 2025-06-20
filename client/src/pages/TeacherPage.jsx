@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { io } from 'socket.io-client';
+import React, { useState, useEffect } from 'react';
 import IntervuePollButton from '../components/IntervuePollButton';
-const socket = io(process.env.REACT_APP_BACKEND_URL);
+import { socket } from '../Socket';
 
 export default function TeacherPage() {
   const [question, setQuestion] = useState('');
@@ -22,6 +21,16 @@ export default function TeacherPage() {
     setOptions([...options, '']);
     setCorrectOptions([...correctOptions, false]);
   };
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('Socket connected!', socket.id);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Connection error:', err);
+    });
+  }, []);
 
   socket.on('poll:update', (data) => setResponses(data));
   socket.on('poll:results', (data) => setResponses(data));
