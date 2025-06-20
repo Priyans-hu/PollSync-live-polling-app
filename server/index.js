@@ -27,12 +27,18 @@ const io = new Server(server, {
 let currentPoll = null;
 let studentResponses = new Map();
 let timer = null;
+const kickedStudents = new Set();
+const activeStudents = new Map();
 
 io.on('connection', (socket) => {
   console.log('New client:', socket.id);
 
   socket.onAny((event, ...args) => {
     console.log(`[Socket EVENT]:`, event, args);
+  });
+
+  socket.on('student:register', (name) => {
+    activeStudents.set(socket.id, name);
   });
 
   socket.on('teacher:create_poll', ({ question, options, timeout }) => {
@@ -47,6 +53,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('student:submit_answer', ({ name, answer }) => {
+    if (kickedStudents.has(name)) {
+      console.log(`Blocked kicked student: ${name}`);
+      socket.emit('student:kick_notice');
+      return;
+    }
+
     if (!studentResponses.has(name)) {
       studentResponses.set(name, answer);
     }
@@ -57,6 +69,21 @@ io.on('connection', (socket) => {
       clearTimeout(timer);
       io.emit('poll:results', Object.fromEntries(studentResponses));
     }
+  });
+
+  socket.on('teacher:kick_student', (studentName) => {
+    console.log('Kicking out:', studentName);
+    kickedStudents.add(studentName);
+    io.emit('student:kicked', studentName);
+  });
+
+  socket.on('disconnect', () => {
+    activeStudents.delete(socket.id);
+  });
+
+  socket.on('teacher:request_student_list', () => {
+    const studentList = Array.from(activeStudents.values());
+    socket.emit('teacher:student_list', studentList);
   });
 });
 

@@ -11,9 +11,12 @@ export default function StudentPage() {
   const [results, setResults] = useState({});
   const [timeLeft, setTimeLeft] = useState(null);
   const timerRef = useRef(null);
+  const [isKicked, setIsKicked] = useState(false);
 
   useEffect(() => {
     socket.on('poll:new', (poll) => {
+      if (isKicked) return;
+
       setCurrentPoll(poll);
       setShowResults(false);
       setAnswer('');
@@ -25,7 +28,19 @@ export default function StudentPage() {
       setResults(data);
       setShowResults(true);
     });
-  }, []);
+  }, [isKicked]);
+
+  useEffect(() => {
+    if (name) {
+      socket.emit('student:register', name);
+    }
+
+    socket.on('student:kicked', (kickedName) => {
+      if (kickedName === name) {
+        setIsKicked(true);
+      }
+    });
+  }, [name]);
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -38,20 +53,30 @@ export default function StudentPage() {
   }, []);
 
   useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0) return;
+    if (!currentPoll?.timestamp || !currentPoll?.timeout) return;
+
+    const endTime = currentPoll.timestamp + currentPoll.timeout * 1000;
 
     timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
+      const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+      setTimeLeft(remaining);
+
+      console.log(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(timerRef.current);
+      }
     }, 1000);
 
+    // Initial set
+    const initialRemaining = Math.max(
+      0,
+      Math.floor((endTime - Date.now()) / 1000)
+    );
+    setTimeLeft(initialRemaining);
+
     return () => clearInterval(timerRef.current);
-  }, [timeLeft]);
+  }, [currentPoll?.timestamp, currentPoll?.timeout]);
 
   const submitAnswer = () => {
     if (!name || !answer) return;
@@ -93,6 +118,19 @@ export default function StudentPage() {
             Continue
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (isKicked) {
+    return (
+      <div className='text-center mt-20 text-grayish font-semibold text-xl flex flex-col items-center justify-center'>
+        <IntervuePollButton />
+        <h1>You have been Kicked out!</h1>
+        <p>
+          Looks like the teacher had removed you from the poll system .Please
+          Try again sometime.
+        </p>
       </div>
     );
   }

@@ -16,6 +16,7 @@ export default function TeacherPage() {
     return stored ? JSON.parse(stored) : [];
   });
   const timerRef = useRef(null);
+  const [studentList, setStudentList] = useState([]);
 
   const handleCreatePoll = () => {
     const newPoll = { question, options, timeout, timestamp: Date.now() };
@@ -34,8 +35,6 @@ export default function TeacherPage() {
     socket.on('poll:update', (data) => setResponses(data));
     socket.on('poll:results', (data) => {
       setResponses(data);
-      clearInterval(timerRef.current);
-      setTimeLeft(0);
     });
 
     return () => {
@@ -57,6 +56,18 @@ export default function TeacherPage() {
     }, 1000);
     return () => clearInterval(timerRef.current);
   }, [timeLeft]);
+
+  useEffect(() => {
+    socket.emit('teacher:request_student_list');
+
+    socket.on('teacher:student_list', (list) => {
+      setStudentList(list);
+    });
+
+    return () => {
+      socket.off('teacher:student_list');
+    };
+  }, []);
 
   const handleNewPoll = () => {
     const completedPoll = {
@@ -140,7 +151,7 @@ export default function TeacherPage() {
           <div className='space-y-4 mb-4'>
             {options.map((opt, i) => (
               <div key={i} className='flex items-center space-x-4'>
-                <span className='w-6 h-6 flex items-center justify-center bg-purple-600 text-white rounded-full'>
+                <span className='w-6 h-6 flex items-center justify-center bg-primary text-white rounded-full'>
                   {i + 1}
                 </span>
                 <input
@@ -213,6 +224,28 @@ export default function TeacherPage() {
             </button>
           </div>
         </>
+      )}
+
+      {studentList.length > 0 && (
+        <div className='mt-6'>
+          <h3 className='font-semibold mb-2'>Connected Students</h3>
+          <ul className='space-y-2'>
+            {studentList.map((name) => (
+              <li
+                key={name}
+                className='flex items-center justify-between p-2 bg-gray-100 rounded'
+              >
+                <span>{name}</span>
+                <button
+                  onClick={() => socket.emit('teacher:kick_student', name)}
+                  className='text-red-600 border border-red-600 px-3 py-1 rounded hover:bg-red-100 text-sm'
+                >
+                  Kick Out
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {pastPolls.length > 0 && (
