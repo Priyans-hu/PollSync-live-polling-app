@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import IntervuePollButton from '../components/IntervuePollButton';
 import { socket } from '../Socket';
+import LivePollResults from '../components/LivePollResults';
 
 export default function TeacherPage() {
+  const [currentPoll, setCurrentPoll] = useState({});
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [correctOptions, setCorrectOptions] = useState([false, false]);
@@ -10,6 +12,11 @@ export default function TeacherPage() {
   const [responses, setResponses] = useState({});
 
   const handleCreatePoll = () => {
+    setCurrentPoll({
+      question,
+      options,
+      timeout,
+    });
     socket.emit('teacher:create_poll', {
       question,
       options,
@@ -147,6 +154,11 @@ export default function TeacherPage() {
           Ask Question
         </button>
       </div>
+    </div>
+  ) : (
+    <div>
+      <IntervuePollButton />
+      <LivePollResults poll={currentPoll} results={responses} />
     </div>
   );
 }
