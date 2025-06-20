@@ -53,7 +53,7 @@ cd client
 npm start
 ```
 
-Frontend will run on `http://localhost:3000` and connect to backend on `http://localhost:3000` (adjust if ports differ).
+Frontend will run on `http://localhost:3000` and connect to backend on `http://localhost:8080` (adjust if ports differ).
 
 ---
 
