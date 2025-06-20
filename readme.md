@@ -1,6 +1,6 @@
-## 📊 Live Polling System
+# 📊 Live Polling System
 
-A real-time web application for conducting live polls between a teacher and multiple students. Built with React, TailwindCSS, Express.js, and Socket.IO. Perfect for classrooms, quizzes, and interactive sessions.
+A real-time classroom polling application where teachers can ask questions, students can respond live, and results are shown instantly. Built with **React**, **TailwindCSS**, **Express**, and **Socket.IO**.
 
 ---
 
@@ -8,20 +8,19 @@ A real-time web application for conducting live polls between a teacher and mult
 
 ### 👨‍🏫 Teacher
 
-- Create a new poll with a question, multiple options, and a timeout (default 60s)
-- View live responses from students as they submit answers
-- View final results after timeout or when all students have responded
+- Create live polls with a question, multiple options, timeout, and correct answer marking
+- View responses in real time with a percentage bar chart UI
+- View timer countdown synced across clients
+- Kick out any student from participating
+- View list of connected students (even if they haven't responded yet)
+- See previous poll history with full results (persisted on the server)
 
 ### 🧑‍🎓 Student
 
-- Enter name once per browser tab (session scoped)
-- View active poll and answer it
-- View results after submission or timeout
-
-### 🔄 Real-Time
-
-- Powered by Socket.IO
-- All actions sync instantly between teacher and students
+- Enter name once per browser session
+- Participate in live polls with auto countdown
+- See result bar chart after poll ends
+- Gets blocked UI if kicked by the teacher
 
 ---
 
@@ -29,12 +28,12 @@ A real-time web application for conducting live polls between a teacher and mult
 
 ### 🧩 Prerequisites
 
-- Node.js 18+
+- Node.js v18+
 
 ### 📦 Install dependencies
 
 ```bash
-# From project root
+# From root
 cd client
 npm install
 cd ../server
@@ -44,23 +43,39 @@ npm install
 ### 🖥 Start development
 
 ```bash
-# Terminal 1
+# Terminal 1 - backend
 cd server
 npm start
 
-# Terminal 2
+# Terminal 2 - frontend
 cd client
 npm start
 ```
 
-Frontend will run on `http://localhost:3000` and connect to backend on `http://localhost:8080` (adjust if ports differ).
+Frontend will run at `http://localhost:3000`, backend at `http://localhost:8080`
+
+---
+
+## ⚙️ Environment Variables
+
+In `/client/.env`:
+
+```env
+REACT_APP_BACKEND_URL=http://localhost:8080
+```
+
+In `/server/.env`:
+
+```env
+CLIENT_URL=http://localhost:3000
+```
 
 ---
 
 ## 🧠 Tech Stack
 
-- **Frontend:** React, TailwindCSS, React Router, Socket.IO Client
-- **Backend:** Express.js, Socket.IO
+- **Frontend**: React, TailwindCSS, React Router, Socket.IO Client
+- **Backend**: Node.js, Express, Socket.IO
 
 ---
 
@@ -72,4 +87,4 @@ Frontend will run on `http://localhost:3000` and connect to backend on `http://l
 
 ---
 
-Happy polling! ✨
+Enjoy polling! 🚀
