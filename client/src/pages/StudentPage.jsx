@@ -29,7 +29,7 @@ export default function StudentPage() {
 
   if (!name) {
     return (
-      <div className='p-6 text-center d-flex justify-center'>
+      <div className='p-6 text-center flex justify-center'>
         <div className='w-[40%]'>
           <IntervuePollButton />
           <div className='my-8'>
@@ -83,7 +83,7 @@ export default function StudentPage() {
           </button>
         </div>
       ) : (
-        <div className='d-flex justify-center align-items-center text-center'>
+        <div className='flex justify-center align-items-center text-center'>
           <CircularLoader />
           <p className='font-bold'>Wait for teacher to ask questions..</p>
         </div>
